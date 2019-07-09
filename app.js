@@ -12,7 +12,6 @@ var util = require('util');
 
 var temp_zip_filename = './temp.zip';
 
-var credentials_filename = "./deploy.cfg";
 var username = "";
 var password = "";
 var appvdf = "";
@@ -26,8 +25,11 @@ console.log(err); //Send some notification about the error
 process.exit(1); });
 
 app.post('/', function (req, res) {
-  parse_config(credentials_filename);
-  process_href(req.body.links.artifacts[0].files[0].href);
+  var config_filename = req.body.buildTargetName.concat('.cfg');
+  if (fs.existsSync(config_filename)) {
+    parse_config(config_filename);
+    process_href(req.body.links.artifacts[0].files[0].href);
+  }
 });
 
 function process_href(href)
