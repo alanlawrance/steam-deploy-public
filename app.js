@@ -26,6 +26,7 @@ console.log(err); //Send some notification about the error
 process.exit(1); });
 
 app.post('/', function (req, res) {
+  parse_config(credentials_filename);
   process_href(req.body.links.artifacts[0].files[0].href);
 });
 
@@ -66,8 +67,6 @@ function decompress_build(input_filename, output_path)
 
 function steam_deploy()
 {
-  parse_config(credentials_filename);
-
   console.log('Uploading build to Steam...');
   try {
     execSync(`${steamcmd} +login ${username} ${password} +run_app_build ${appvdf} +quit`);
