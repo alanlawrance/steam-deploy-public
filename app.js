@@ -7,27 +7,26 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 var fs = require('fs');
 var wget = require('node-wget');
-var unzipper = require('unzipper');
 var execSync = require('child_process').execSync;
+var util = require('util');
 
-var content_dir = '../build/content';
 var temp_zip_filename = './temp.zip';
 
 var credentials_filename = "./deploy.cfg";
 var username = "";
 var password = "";
 var appvdf = "";
+var content_dir = "";
+var steamcmd = "";
 
 const port = process.env.port || 5000
 
+process.on('uncaughtException', function (err) {
+console.log(err); //Send some notification about the error
+process.exit(1); });
+
 app.post('/', function (req, res) {
-  console.log('Processing POST message...');
-  for (var artifact in req.body.links.artifacts) {
-    if (artifact.key == "primary") {
-      console.log("Processing href...");
-      process_href(artifact.files[0].href);
-    }
-  }
+  process_href(req.body.links.artifacts[0].files[0].href);
 });
 
 function process_href(href)
@@ -52,36 +51,43 @@ function wget_completed(error, response, body)
     steam_deploy();
     fs.unlinkSync(temp_zip_filename);
   }
-  console.log("steam-deploy listening on port %s", port);
 }
 
 function decompress_build(input_filename, output_path)
 {
   console.log('Decompressing build...');
-  fs.createReadStream(input_filename).pipe(unzipper.Extract({ path: output_path }));  
+  try {
+    execSync(`unzip -o ${temp_zip_filename} -d ${content_dir}`);
+  } catch (error) {
+    console.log('Unzip failed');
+    process.exit(1);
+  }
 }
 
 function steam_deploy()
 {
-  console.log('Parsing credentials from deploy.cfg');
-  parse_credentials(credentials_filename);
+  parse_config(credentials_filename);
 
   console.log('Uploading build to Steam...');
-  if (os.platform() == "win32") {
-    execSync("..\\steamcmd\\steamcmd.exe +login ${username} ${password} +run_app_build ..\\build\\${appvdf} +quit");
-  } else {
-    execSync("../steamcmd/steamcmd.sh +login ${username} ${password} +run_app_build ../build/${appvdf} +quit");
+  try {
+    execSync(`${steamcmd} +login ${username} ${password} +run_app_build ${appvdf} +quit`);
+  } catch (error) {
+    console.log('Upload failed');
+    process.exit(1);
   }
+
   console.log('Upload complete');
 }
 
-function parse_credentials(filename)
+function parse_config(filename)
 {
   var data = fs.readFileSync(filename, 'utf8');
   var lines = data.split("\n");
-  username = lines[0];
-  password = lines[1];
-  appvdf = lines[2];
+  username = lines[0].trim();
+  password = lines[1].trim();
+  content_dir = lines[2].trim();
+  steamcmd = lines[3].trim();
+  appvdf = lines[4].trim();
 }
 
 function create_directory(path)
@@ -112,5 +118,5 @@ function delete_folder_recursive(path)
 };
 
 app.listen(port, function () {
-  console.log("steam-deploy listening on port %s", port);
+  console.log("Listening on port %s", port);
 });
