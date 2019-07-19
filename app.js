@@ -6,7 +6,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var fs = require('fs');
-var http = require('http');
+var https = require('https');
 var execSync = require('child_process').execSync;
 var util = require('util');
 
@@ -51,7 +51,7 @@ function download_href(url, dest)
     process.exit(1);
   }
 
-  http.get(url, function(res) {
+  https.get(url, function(res) {
     res.on('data', function(data) {
       file.write(data);
     }).on('end', function() {
