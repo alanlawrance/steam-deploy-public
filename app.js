@@ -6,6 +6,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var fs = require('fs');
+var request = require('request');
 var https = require('https');
 var execSync = require('child_process').execSync;
 var util = require('util');
@@ -39,28 +40,40 @@ function process_href(href)
   remove_build(content_dir);
   create_directory(content_dir);
   remove_file(temp_zip_filename);
-  download_href(href, temp_zip_filename); 
+  download(href, temp_zip_filename, download_completed); 
 }
 
-function download_href(url, dest)
+function download(url, dest, cb)
 {
-  try {
-    var file = fs.createWriteStream(dest);
-  } catch(error) {
-    console.log('Create %s failed with error %s', dest, error.message);
-    process.exit(1);
-  }
+  const file = fs.createWriteStream(dest);
+  const sendReq = request.get(url);
 
-  https.get(url, function(res) {
-    res.on('data', function(data) {
-      file.write(data);
-    }).on('end', function() {
-      console.log('Downloaded build to %s', dest);
-      file.end();
-      download_completed(dest);
-    });
+  sendReq.on('response', (response) => {
+    if (response.statusCode !== 200) {
+      console.log('Error: Response status was ' + response.statusCode);
+      return;
+    }
+
+     sendReq.pipe(file);
   });
-}
+
+  file.on('finish', () => {
+    cb(dest);
+    return;
+  });
+
+  sendReq.on('error', (err) => {
+    console.log("Error: %s", err.message);
+    fs.unlink(dest);
+    return;
+  });
+
+  file.on('error', (err) => {
+    console.log('Error: %s', err.message);
+    fs.unlink(dest);
+    return;
+  });
+};
 
 function download_completed(dest)
 {
