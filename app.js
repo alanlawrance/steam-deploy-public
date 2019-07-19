@@ -64,12 +64,8 @@ function download_href(url, dest)
 
 function download_completed(dest)
 {
-  if (error) {
-    console.log(error);
-  } else {
     decompress_build(dest, content_dir);
     steam_deploy();
-  }
 }
 
 function decompress_build(filename, output_path)
