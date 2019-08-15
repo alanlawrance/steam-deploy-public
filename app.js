@@ -18,6 +18,7 @@ var password = "";
 var appvdf = "";
 var content_dir = "";
 var steamcmd = "";
+var version_filename = "";
 
 const port = process.env.port || 5000
 
@@ -27,23 +28,25 @@ process.exit(1); });
 
 app.post('/', function (req, res) {
   var config_filename = req.body.buildTargetName.concat('.cfg');
+  var version = req.body.buildNumber;
   if (fs.existsSync(config_filename)) {
     parse_config(config_filename);
-    process_href(req.body.links.artifacts[0].files[0].href);
+    console.log('%s', req.body);
+    process_href(req.body.links.artifacts[0].files[0].href, version);
   } else {
     console.log('%s not found so Build Success Event ignored', config_filename);
   }
 });
 
-function process_href(href)
+function process_href(href, version)
 {
   remove_build(content_dir);
   create_directory(content_dir);
   remove_file(temp_zip_filename);
-  download(href, temp_zip_filename, download_completed); 
+  download(href, temp_zip_filename, version, download_completed); 
 }
 
-function download(url, dest, cb)
+function download(url, dest, version, cb)
 {
   const file = fs.createWriteStream(dest);
   const sendReq = request.get(url);
@@ -58,7 +61,7 @@ function download(url, dest, cb)
   });
 
   file.on('finish', () => {
-    cb(dest);
+    cb(dest, version);
     return;
   });
 
@@ -75,9 +78,10 @@ function download(url, dest, cb)
   });
 };
 
-function download_completed(dest)
+function download_completed(dest, version)
 {
     decompress_build(dest, content_dir);
+    create_version_file(version);
     steam_deploy();
 }
 
@@ -90,6 +94,15 @@ function decompress_build(filename, output_path)
     console.log('Unzip failed with error %s', error.message);
     process.exit(1);
   }
+}
+
+function create_version_file(version)
+{
+  fs.writeFileSync(version_filename, version, function(err) {
+    if (err) {
+      return console.log('Failed to write version file');
+    }
+  });
 }
 
 function steam_deploy()
@@ -114,6 +127,7 @@ function parse_config(filename)
   content_dir = lines[2].trim();
   steamcmd = lines[3].trim();
   appvdf = lines[4].trim();
+  version_filename = lines[5].trim();
 }
 
 function create_directory(path)
