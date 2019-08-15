@@ -28,10 +28,12 @@ process.exit(1); });
 
 app.post('/', function (req, res) {
   var config_filename = req.body.buildTargetName.concat('.cfg');
-  var version = req.body.buildNumber;
+  var build_number = req.body.buildNumber;
+  var last_commit = req.body.lastBuiltRevision;
+  var version = build_number.toString().concat('\n').concat(last_commit);
   if (fs.existsSync(config_filename)) {
     parse_config(config_filename);
-    console.log('%s', req.body);
+    console.log(JSON.stringify(req.body));
     process_href(req.body.links.artifacts[0].files[0].href, version);
   } else {
     console.log('%s not found so Build Success Event ignored', config_filename);
@@ -98,12 +100,10 @@ function decompress_build(filename, output_path)
 
 function create_version_file(version)
 {
-  fs.writeFileSync(version_filename, version, function(err) {
-    if (err) {
-      return console.log('Failed to write version file');
-    }
-  });
+  console.log('Write console log to %s', version_filename);
+  fs.writeFileSync(version_filename, version); 
 }
+
 
 function steam_deploy()
 {
