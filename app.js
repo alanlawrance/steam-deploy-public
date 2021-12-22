@@ -132,7 +132,7 @@ function steam_deploy()
 {
   console.log('Uploading build to Steam...');
   try {
-    execSync(`${steamcmd} +login ${username} ${password} +run_app_build ${appvdf} +quit`);
+    execSync(`${steamcmd} +login ${username} '${password}' +run_app_build ${appvdf} +quit`);
   } catch (error) {
     console.log('Upload failed with error %s', error.message);
     process.exit(1);
