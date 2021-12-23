@@ -9,3 +9,6 @@ versionFilename: build/content/version.txt
 steamAppidFilename: steam_appid.txt
 steamDllFilename: build/content/_steam_dll_path
 useDRM: true
+DRMType: 0 #https://partner.steamgames.com/doc/features/drm?l=english
+execInputFile: build/content/SteamBuilder_Tester.exe
+execOutputFile: build/output/SteamBuilder_Tester.exe
