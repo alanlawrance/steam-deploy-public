@@ -77,7 +77,7 @@ function parseConfigurationFile(config_filename) {
   
     // For legacy compatibility show again the path of the files
     configuration.inputDir = "./build/" + config_filename + "/content";
-    configuration.outputDir = "./build/" + config_filename + "/content";
+    configuration.outputDir = "./build/" + config_filename + "/output";
     configuration.versionFilename = configuration.inputDir + "/version.txt";
     configuration.steamDllFilename = configuration.inputDir + "/" + configuration.steamDllFilename;
     configuration.steamBuildConfigurationPath = "./configuration/" + config_filename + "/" + configuration.steamBuildConfigurationPath;
