@@ -1,0 +1,11 @@
+# This is a sample configuration
+username: steam_username
+password: steam_password
+inputDir: build/content
+outputDir: build/output
+steamcmdPath: ../steamcmd/steamcmd.sh
+steamBuildConfigurationPath: ../steam-deploy-public/build/app_build_XXXXXXX.vdf
+versionFilename: build/content/version.txt
+steamAppidFilename: steam_appid.txt
+steamDllFilename: build/content/_steam_dll_path
+useDRM: true

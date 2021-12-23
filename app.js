@@ -1,22 +1,23 @@
-let express = require('express');
-let app = express();
+const express = require('express');
+const yaml = require('js-yaml');
+const fs = require('fs');
+const request = require('request');
+const https = require('https');
+const execSync = require('child_process').execSync;
+const util = require('util');
+const path = require('path');
+const app = express();
 
-let bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-let fs = require('fs');
-let request = require('request');
-let https = require('https');
-let execSync = require('child_process').execSync;
-let util = require('util');
-let path = require('path');
 
 const port = process.env.port || 5000
 
 process.on('uncaughtException', function (err) {
-console.log(err);
-process.exit(1); });
+  console.error(err);
+  process.exit(1); 
+});
 
 app.post('/', async(req, res) => {
   handleBuildSuccessEvent(req);
@@ -32,15 +33,14 @@ async function handleBuildSuccessEvent(request) {
   let configuration = tryToLoadConfigurationFile(config_filename)
 
   if (href != null && configuration != null) {
-    remove_build(configuration.contentDir);
-    create_directory(configuration.contentDir);
+    removeBuild(configuration.inputDir);
+    createDirectory(configuration.inputDir);
 
     let temp_zip_filename = './' + config_filename + '.zip';
-    remove_file(temp_zip_filename);
 
     // need to delete previous output, as cached data from Steam uploads will grow unbounded
     // TODO: improvement would be to only delete once directory size exceeds threshold
-    delete_folder_recursive(configuration.outputDir)
+    deleteFolderRecursive(configuration.outputDir)
     
     download(configuration, href, temp_zip_filename, version, onDownloadCompleted); 
   } else {
@@ -63,26 +63,34 @@ function getArtifactHref(request) {
 }
 
 function tryToLoadConfigurationFile(config_filename) {
-  if (fs.existsSync("./configuration/" + config_filename.concat('.yaml'))) {
-    return {};
+  if (fs.existsSync("./configuration/" + config_filename.concat('.yml'))) {
+    return pareseConfigurationFile(config_filename);
   } else if (fs.existsSync(config_filename.concat('.cfg'))) {
     return parseLegacyConfigurationFile(config_filename);
   }
   return null;
 }
 
-function parseLegacyConfigurationFile(config_filename)
-{
+function pareseConfigurationFile(config_filename) {
+  try {
+    return yaml.load(fs.readFileSync("./configuration/" + config_filename.concat('.yml'), 'utf8'));
+  } catch (e) {
+    console.error("Something went wrong while trying to read a file: " + e.message);
+    return null;
+  }
+}
+
+function parseLegacyConfigurationFile(config_filename) {
   try {
     let data = fs.readFileSync(config_filename.concat('.cfg'), 'utf8');
     let lines = data.split('\n');
     return {
       username: lines[0].trim(),
       password: lines[1].trim(),
-      contentDir: lines[2].trim(),
+      inputDir: lines[2].trim(),
       outputDir: lines[3].trim(),
-      steamcmd: lines[4].trim(),
-      appvdf: lines[5].trim(),
+      steamcmdPath: lines[4].trim(),
+      steamBuildConfigurationPath: lines[5].trim(),
       versionFilename: lines[6].trim(),
       steamAppidFilename: lines[7].trim(),
       steamDllFilename: lines[8].trim(),
@@ -127,26 +135,31 @@ function download(configuration, url, dest, version, cb)
 
 function onDownloadCompleted(configuration, dest, version)
 {
-    decompressBuild(dest, configuration.contentDir);
-    createVersionFile(version, configuration.versionFilename);
-    copySteamDllToBuild(configuration.steamDllFilename, configuration.contentDir);
-    steamDeploy(configuration);
-}
-
-function decompressBuild(filename, contentDir)
-{
-  console.log('Decompressing build...');
   try {
-    execSync(`unzip -o ${filename} -d ${contentDir}`);
-  } catch (error) {
-    console.log('Unzip failed with error %s', error.message);
-    process.exit(1);
+    decompressBuild(dest, configuration.inputDir);
+    createVersionFile(version, configuration.versionFilename);
+    copySteamDllToBuild(configuration.steamDllFilename, configuration.inputDir);
+    steamDeploy(configuration);
+  } catch (e) {
+    console.error("Unable to manage steam upload for: " + e.message);
+  } finally {
+    tryToRemoveTempFile(dest);
   }
 }
 
-function copySteamDllToBuild(steamDllFilename, contentDir)
+function decompressBuild(filename, inputDir)
 {
-  fs.copyFileSync(steamDllFilename, path.join(contentDir, path.basename(steamDllFilename)));
+  console.log('Decompressing build...');
+  try {
+    execSync(`unzip -o ${filename} -d ${inputDir}`);
+  } catch (error) {
+    throw new Error('Unzip failed with error %s', error.message);
+  }
+}
+
+function copySteamDllToBuild(steamDllFilename, inputDir)
+{
+  fs.copyFileSync(steamDllFilename, path.join(inputDir, path.basename(steamDllFilename)));
 }
 
 function createVersionFile(version, versionFilename)
@@ -159,41 +172,40 @@ function steamDeploy(configuration)
 {
   console.log('Uploading build to Steam...');
   try {
-    execSync(`${configuration.steamcmd} +login ${configuration.username} '${configuration.password}' +run_app_build ${configuration.appvdf} +quit`);
+    execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
   } catch (error) {
-    console.log('Upload failed with error %s', error.message);
-    process.exit(1);
+    throw new Error('Upload failed with error %s', error.message);
   }
 
   console.log('Upload complete');
 }
 
-function create_directory(path)
+function createDirectory(path)
 {
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path);
   }
 }
 
-function remove_file(path)
+function tryToRemoveTempFile(path)
 {
   if (fs.existsSync(path)) {
     fs.unlinkSync(path);
   }
 }
 
-function remove_build(path)
+function removeBuild(path)
 {
-  delete_folder_recursive(path);
+  deleteFolderRecursive(path);
 }
 
-function delete_folder_recursive(path)
+function deleteFolderRecursive(path)
 {
   if( fs.existsSync(path) ) {
     fs.readdirSync(path).forEach(function(file,index){
       let curPath = path + '/' + file;
       if (fs.lstatSync(curPath).isDirectory()) { // recurse
-        delete_folder_recursive(curPath);
+        deleteFolderRecursive(curPath);
       } else { // delete file
         fs.unlinkSync(curPath);
       }
