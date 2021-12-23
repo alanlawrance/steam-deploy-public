@@ -11,6 +11,7 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
+    "js-yaml": "^4.1.0",
     "node-wget": "^0.4.3",
     "nodemon": "^1.19.1",
     "unzipper": "^0.10.1"
