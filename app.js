@@ -72,16 +72,14 @@ function tryToLoadConfigurationFile(config_filename) {
 
 function parseConfigurationFile(config_filename) {
   try {
-    let configuration = yaml.load(fs.readFileSync("./configuration/" + config_filename.concat('.yml'), 'utf8'));
+    let configuration = yaml.load(fs.readFileSync("./build/" + config_filename.concat('.yml'), 'utf8'));
   
-    // For legacy compatibility show again the path of the files
     configuration.inputDir = "build/" + config_filename + "/content";
     configuration.outputDir = "build/" + config_filename + "/output";
     configuration.versionFilename = configuration.inputDir + "/version.txt";
     configuration.steamDllFilename = configuration.inputDir + "/" + configuration.steamDllFilename;
-    configuration.steamBuildConfigurationPath = "./configuration/" + config_filename + "/" + configuration.steamBuildConfigurationPath;
-    configuration.execInputFile = configuration.inputDir + "/" + configuration.execInputFile;
-    configuration.execOutputFile = configuration.inputDir + "/" + configuration.execOutputFile;
+    configuration.steamBuildConfigurationPath = configuration.steamBuilderPath + "/build/" + config_filename + "/" + configuration.steamBuildConfigurationPath;
+    configuration.execForDRM = configuration.steamBuilderPath + "/build/" + configuration.inputDir + "/" + configuration.execForDRM;
 
     return configuration;
   } catch (e) {
@@ -186,9 +184,7 @@ function steamDeploy(configuration)
   try {
     if(configuration.useDRM) {
       console.log('Uploading build to Steam with DRM...');
-      execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' 
-      +drm_wrap ${configuration.appId} ${configuration.execInputFile} ${configuration.execOutputFile} 
-      drmtoolp ${configuration.DRMType} +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
+      execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' +drm_wrap ${configuration.appId} ${configuration.execForDRM} ${configuration.execForDRM} drmtoolp ${configuration.DRMType} +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
     } else {
       console.log('Uploading build to Steam without DRM...');
       execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
