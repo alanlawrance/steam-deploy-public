@@ -20,6 +20,7 @@ process.on('uncaughtException', function (err) {
 });
 
 app.post('/', async(req, res) => {
+  console.log(req)
   handleBuildSuccessEvent(req);
   res.json("Success");
 });
