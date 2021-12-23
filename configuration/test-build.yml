@@ -1,14 +1,11 @@
 # This is a sample configuration
 username: steam_username
 password: steam_password
-inputDir: build/content
-outputDir: build/output
 steamcmdPath: ../steamcmd/steamcmd.sh
-steamBuildConfigurationPath: ../steam-deploy-public/build/app_build_XXXXXXX.vdf
-versionFilename: build/content/version.txt
-steamAppidFilename: steam_appid.txt
-steamDllFilename: build/content/_steam_dll_path
+appId: 1613470
+steamBuildConfigurationPath: app_build_XXXXXXX.vdf
+steamDllFilename: _steam_dll_path
 useDRM: true
 DRMType: 0 #https://partner.steamgames.com/doc/features/drm?l=english
-execInputFile: build/content/SteamBuilder_Tester.exe
-execOutputFile: build/output/SteamBuilder_Tester.exe
+execInputFile: SteamBuilder_Tester.exe
+execOutputFile: SteamBuilder_Tester.exe
