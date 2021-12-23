@@ -30,11 +30,7 @@ process.on('uncaughtException', function (err) {
 console.log(err);
 process.exit(1); });
 
-app.post('/', function (req, res) {
-
-    // TODO: possible can receive multiple build events in a short time, which can cause problems with unzip.
-    // TODO: need to put events in queue and process sequentially
-
+app.post('/', async(req, res, next) => {
     var config_filename = req.body.buildTargetName.concat('.cfg');
     var build_number = req.body.buildNumber;
     var last_commit = req.body.lastBuiltRevision;
@@ -48,8 +44,9 @@ app.post('/', function (req, res) {
            href = req.body.links.artifacts[1].files[0].href;
     }
     process_href(href, version);
+    res.json("Success")
   } else {
-    console.log('%s not found so Build Success Event ignored', config_filename);
+    next(config_filename + ' not found so Build Success Event ignored')
   }
 });
 
