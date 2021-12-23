@@ -62,7 +62,7 @@ function getArtifactHref(request) {
 }
 
 function tryToLoadConfigurationFile(config_filename) {
-  if (fs.existsSync("./configuration/" + config_filename.concat('.yml'))) {
+  if (fs.existsSync("./build/" + config_filename.concat('.yml'))) {
     return parseConfigurationFile(config_filename);
   } else if (fs.existsSync(config_filename.concat('.cfg'))) {
     return parseLegacyConfigurationFile(config_filename);
