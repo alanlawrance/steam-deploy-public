@@ -80,7 +80,9 @@ function parseConfigurationFile(config_filename) {
     configuration.outputDir = "./build/" + config_filename + "/content";
     configuration.versionFilename = configuration.inputDir + "/version.txt";
     configuration.steamDllFilename = configuration.inputDir + "/" + configuration.steamDllFilename;
-    configuration.steamBuildConfigurationPath = configuration.inputDir + "/" + configuration.steamBuildConfigurationPath;
+    configuration.steamBuildConfigurationPath = "./configuration/" + configuration.steamBuildConfigurationPath;
+    configuration.execInputFile = configuration.inputDir + "/" + configuration.execInputFile;
+    configuration.execOutputFile = configuration.inputDir + "/" + configuration.execOutputFile;
 
     return configuration;
   } catch (e) {
@@ -185,7 +187,7 @@ function steamDeploy(configuration)
     if(configuration.useDRM) {
       console.log('Uploading build to Steam with DRM...');
       execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' 
-      +drm_wrap ${configuration.appId} ${configuration.inputDir + "/" + configuration.execInputFile} ${configuration.inputDir + "/" + configuration.execOutputFile} 
+      +drm_wrap ${configuration.appId} ${configuration.execInputFile} ${configuration.execOutputFile} 
       drmtoolp ${configuration.DRMType} +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
     } else {
       console.log('Uploading build to Steam without DRM...');
