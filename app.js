@@ -12,58 +12,88 @@ let execSync = require('child_process').execSync;
 let util = require('util');
 let path = require('path');
 
-let temp_zip_filename = './temp.zip';
-
-let username = "";
-let password = "";
-let appvdf = "";
-let content_dir = "";
-let output_dir = "";
-let steamcmd = "";
-let version_filename = "";
-let steam_appid_filename = "";
-let steam_dll_filename = "";
-
 const port = process.env.port || 5000
 
 process.on('uncaughtException', function (err) {
 console.log(err);
 process.exit(1); });
 
-app.post('/', async(req, res, next) => {
-  let config_filename = req.body.buildTargetName.concat('.cfg');
-  let build_number = req.body.buildNumber;
-  let last_commit = req.body.lastBuiltRevision;
-  let version = build_number.toString().concat('\n').concat(last_commit);
-  if (fs.existsSync(config_filename)) {
-      parse_config(config_filename);
-
-      // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
-      let href = req.body.links.artifacts[0].files[0].href;
-      if (href.includes('pdb_symbols')) {
-          href = req.body.links.artifacts[1].files[0].href;
-  }
-  process_href(href, version);
-  res.json("Success")
-  } else {
-    next(config_filename + ' not found so Build Success Event ignored')
-  }
+app.post('/', async(req, res) => {
+  handleBuildSuccessEvent(req);
+  res.json("Success");
 });
 
-function process_href(href, version)
-{
-  remove_build(content_dir);
-  create_directory(content_dir);
-  remove_file(temp_zip_filename);
+async function handleBuildSuccessEvent(request) {
+  let config_filename = request.body.buildTargetName;
+  let build_number = request.body.buildNumber;
+  let last_commit = request.body.lastBuiltRevision;
+  let version = build_number.toString().concat('\n').concat(last_commit);
+  let href = getArtifactHref(request);
+  let configuration = tryToLoadConfigurationFile(config_filename)
 
-  // need to delete previous output, as cached data from Steam uploads will grow unbounded
-  // TODO: improvement would be to only delete once directory size exceeds threshold
-  delete_folder_recursive(output_dir)
-  
-  download(href, temp_zip_filename, version, download_completed); 
+  if (href != null && configuration != null) {
+    remove_build(configuration.contentDir);
+    create_directory(configuration.contentDir);
+
+    let temp_zip_filename = './' + config_filename + '.zip';
+    remove_file(temp_zip_filename);
+
+    // need to delete previous output, as cached data from Steam uploads will grow unbounded
+    // TODO: improvement would be to only delete once directory size exceeds threshold
+    delete_folder_recursive(configuration.outputDir)
+    
+    download(configuration, href, temp_zip_filename, version, onDownloadCompleted); 
+  } else {
+    console.error(config_filename + " doesn't have a configuration file")
+  }
 }
 
-function download(url, dest, version, cb)
+function getArtifactHref(request) {
+  try {
+    let href = request.body.links.artifacts[0].files[0].href;
+    // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
+    if (href.includes('pdb_symbols')) {
+      href = request.body.links.artifacts[1].files[0].href;
+    }
+    return href;
+  } catch (e) {
+    console.error("Unable to get artifact href for: " + e.message);
+    return null;
+  }
+}
+
+function tryToLoadConfigurationFile(config_filename) {
+  if (fs.existsSync("./configuration/" + config_filename.concat('.yaml'))) {
+    return {};
+  } else if (fs.existsSync(config_filename.concat('.cfg'))) {
+    return parseLegacyConfigurationFile(config_filename);
+  }
+  return null;
+}
+
+function parseLegacyConfigurationFile(config_filename)
+{
+  try {
+    let data = fs.readFileSync(config_filename.concat('.cfg'), 'utf8');
+    let lines = data.split('\n');
+    return {
+      username: lines[0].trim(),
+      password: lines[1].trim(),
+      contentDir: lines[2].trim(),
+      outputDir: lines[3].trim(),
+      steamcmd: lines[4].trim(),
+      appvdf: lines[5].trim(),
+      versionFilename: lines[6].trim(),
+      steamAppidFilename: lines[7].trim(),
+      steamDllFilename: lines[8].trim(),
+    }
+  } catch (e) {
+    console.error("Something went wrong while trying to read a file: " + e.message);
+    return null;
+  }
+}
+
+function download(configuration, url, dest, version, cb)
 {
   const file = fs.createWriteStream(dest);
   const sendReq = request.get(url);
@@ -78,7 +108,7 @@ function download(url, dest, version, cb)
   });
 
   file.on('finish', () => {
-    cb(dest, version);
+    cb(configuration, dest, version);
     return;
   });
 
@@ -95,62 +125,47 @@ function download(url, dest, version, cb)
   });
 };
 
-function download_completed(dest, version)
+function onDownloadCompleted(configuration, dest, version)
 {
-    decompress_build(dest, content_dir);
-    create_version_file(version);
-    copy_steam_dll_to_build();
-    steam_deploy();
+    decompressBuild(dest, configuration.contentDir);
+    createVersionFile(version, configuration.versionFilename);
+    copySteamDllToBuild(configuration.steamDllFilename, configuration.contentDir);
+    steamDeploy(configuration);
 }
 
-function decompress_build(filename, output_path)
+function decompressBuild(filename, contentDir)
 {
   console.log('Decompressing build...');
   try {
-    execSync(`unzip -o ${filename} -d ${content_dir}`);
+    execSync(`unzip -o ${filename} -d ${contentDir}`);
   } catch (error) {
     console.log('Unzip failed with error %s', error.message);
     process.exit(1);
   }
 }
 
-function copy_steam_dll_to_build()
+function copySteamDllToBuild(steamDllFilename, contentDir)
 {
-  fs.copyFileSync(steam_dll_filename, path.join(content_dir, path.basename(steam_dll_filename)));
+  fs.copyFileSync(steamDllFilename, path.join(contentDir, path.basename(steamDllFilename)));
 }
 
-function create_version_file(version)
+function createVersionFile(version, versionFilename)
 {
-  console.log('Write console log to %s', version_filename);
-  fs.writeFileSync(version_filename, version); 
+  console.log('Write console log to %s', versionFilename);
+  fs.writeFileSync(versionFilename, version); 
 }
 
-function steam_deploy()
+function steamDeploy(configuration)
 {
   console.log('Uploading build to Steam...');
   try {
-    execSync(`${steamcmd} +login ${username} '${password}' +run_app_build ${appvdf} +quit`);
+    execSync(`${configuration.steamcmd} +login ${configuration.username} '${configuration.password}' +run_app_build ${configuration.appvdf} +quit`);
   } catch (error) {
     console.log('Upload failed with error %s', error.message);
     process.exit(1);
   }
 
   console.log('Upload complete');
-}
-
-function parse_config(filename)
-{
-  let data = fs.readFileSync(filename, 'utf8');
-  let lines = data.split('\n');
-  username = lines[0].trim();
-  password = lines[1].trim();
-  content_dir = lines[2].trim();
-  output_dir  = lines[3].trim();
-  steamcmd = lines[4].trim();
-  appvdf = lines[5].trim();
-  version_filename = lines[6].trim();
-  steam_appid_filename = lines[7].trim();
-  steam_dll_filename = lines[8].trim();
 }
 
 function create_directory(path)

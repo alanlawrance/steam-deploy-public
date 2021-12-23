@@ -8,6 +8,16 @@
     "startedBy": "Build User <builduser@domain.com>",
     "platform": "standaloneosxintel",
     "links": {
+        "artifacts": [
+            {
+                "name": "need better test request",
+                "files": [
+                    {
+                        "href": "url downloadable build"
+                    }
+                ]
+            }
+        ],
         "api_self": {
             "method": "get",
             "href": "/api/orgs/my-org/projects/my-project/buildtargets/mac-desktop-32-bit-build/builds/14"
