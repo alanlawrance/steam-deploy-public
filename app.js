@@ -80,7 +80,7 @@ function parseConfigurationFile(config_filename) {
     configuration.outputDir = "./build/" + config_filename + "/content";
     configuration.versionFilename = configuration.inputDir + "/version.txt";
     configuration.steamDllFilename = configuration.inputDir + "/" + configuration.steamDllFilename;
-    configuration.steamBuildConfigurationPath = "./configuration/" + configuration.steamBuildConfigurationPath;
+    configuration.steamBuildConfigurationPath = "./configuration/" + config_filename + "/" + configuration.steamBuildConfigurationPath;
     configuration.execInputFile = configuration.inputDir + "/" + configuration.execInputFile;
     configuration.execOutputFile = configuration.inputDir + "/" + configuration.execOutputFile;
 
