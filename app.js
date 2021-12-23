@@ -144,11 +144,11 @@ function onDownloadCompleted(configuration, dest, version)
     createVersionFile(version, configuration.versionFilename);
     copySteamDllToBuild(configuration.steamDllFilename, configuration.inputDir);
     steamDeploy(configuration);
-    removeBuild(configuration.inputDir);
-    removeBuild(configuration.outputDir);
   } catch (e) {
     console.error("Unable to manage steam upload for: " + e.message);
   } finally {
+    removeBuild(configuration.inputDir);
+    removeBuild(configuration.outputDir);
     tryToRemoveTempFile(dest);
   }
 }
