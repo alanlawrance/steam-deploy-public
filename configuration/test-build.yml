@@ -2,7 +2,7 @@
 username: steam_username
 password: steam_password
 steamcmdPath: ../steamcmd/steamcmd.sh
-appId: 1613470
+appId: 000000
 steamBuildConfigurationPath: app_build_XXXXXXX.vdf
 steamDllFilename: _steam_dll_path
 useDRM: true
