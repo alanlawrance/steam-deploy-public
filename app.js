@@ -36,7 +36,7 @@ async function handleBuildSuccessEvent(request) {
     removeBuild(configuration.inputDir);
     createDirectory(configuration.inputDir);
 
-    let temp_zip_filename = './temp/' + config_filename + '.zip';
+    let temp_zip_filename = './' + config_filename + '.zip';
 
     // need to delete previous output, as cached data from Steam uploads will grow unbounded
     // TODO: improvement would be to only delete once directory size exceeds threshold
