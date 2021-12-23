@@ -34,13 +34,7 @@ async function handleBuildSuccessEvent(request) {
 
   if (href != null && configuration != null) {
     createDirectory(configuration.inputDir);
-
     let temp_zip_filename = './' + config_filename + '.zip';
-
-    // need to delete previous output, as cached data from Steam uploads will grow unbounded
-    // TODO: improvement would be to only delete once directory size exceeds threshold
-    deleteFolderRecursive(configuration.outputDir)
-    
     download(configuration, href, temp_zip_filename, version, onDownloadCompleted); 
   } else {
     console.error(config_filename + " doesn't have a configuration file")
