@@ -1,28 +1,28 @@
-var express = require('express');
-var app = express();
+let express = require('express');
+let app = express();
 
-var bodyParser = require('body-parser');
+let bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-var fs = require('fs');
-var request = require('request');
-var https = require('https');
-var execSync = require('child_process').execSync;
-var util = require('util');
-var path = require('path');
+let fs = require('fs');
+let request = require('request');
+let https = require('https');
+let execSync = require('child_process').execSync;
+let util = require('util');
+let path = require('path');
 
-var temp_zip_filename = './temp.zip';
+let temp_zip_filename = './temp.zip';
 
-var username = "";
-var password = "";
-var appvdf = "";
-var content_dir = "";
-var output_dir = "";
-var steamcmd = "";
-var version_filename = "";
-var steam_appid_filename = "";
-var steam_dll_filename = "";
+let username = "";
+let password = "";
+let appvdf = "";
+let content_dir = "";
+let output_dir = "";
+let steamcmd = "";
+let version_filename = "";
+let steam_appid_filename = "";
+let steam_dll_filename = "";
 
 const port = process.env.port || 5000
 
@@ -31,20 +31,20 @@ console.log(err);
 process.exit(1); });
 
 app.post('/', async(req, res, next) => {
-    var config_filename = req.body.buildTargetName.concat('.cfg');
-    var build_number = req.body.buildNumber;
-    var last_commit = req.body.lastBuiltRevision;
-    var version = build_number.toString().concat('\n').concat(last_commit);
-    if (fs.existsSync(config_filename)) {
-        parse_config(config_filename);
+  let config_filename = req.body.buildTargetName.concat('.cfg');
+  let build_number = req.body.buildNumber;
+  let last_commit = req.body.lastBuiltRevision;
+  let version = build_number.toString().concat('\n').concat(last_commit);
+  if (fs.existsSync(config_filename)) {
+      parse_config(config_filename);
 
-        // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
-        var href = req.body.links.artifacts[0].files[0].href;
-        if (href.includes('pdb_symbols')) {
-           href = req.body.links.artifacts[1].files[0].href;
-    }
-    process_href(href, version);
-    res.json("Success")
+      // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
+      let href = req.body.links.artifacts[0].files[0].href;
+      if (href.includes('pdb_symbols')) {
+          href = req.body.links.artifacts[1].files[0].href;
+  }
+  process_href(href, version);
+  res.json("Success")
   } else {
     next(config_filename + ' not found so Build Success Event ignored')
   }
@@ -140,8 +140,8 @@ function steam_deploy()
 
 function parse_config(filename)
 {
-  var data = fs.readFileSync(filename, 'utf8');
-  var lines = data.split('\n');
+  let data = fs.readFileSync(filename, 'utf8');
+  let lines = data.split('\n');
   username = lines[0].trim();
   password = lines[1].trim();
   content_dir = lines[2].trim();
@@ -176,7 +176,7 @@ function delete_folder_recursive(path)
 {
   if( fs.existsSync(path) ) {
     fs.readdirSync(path).forEach(function(file,index){
-      var curPath = path + '/' + file;
+      let curPath = path + '/' + file;
       if (fs.lstatSync(curPath).isDirectory()) { // recurse
         delete_folder_recursive(curPath);
       } else { // delete file
