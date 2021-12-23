@@ -30,10 +30,9 @@ async function handleBuildSuccessEvent(request) {
   let last_commit = request.body.lastBuiltRevision;
   let version = build_number.toString().concat('\n').concat(last_commit);
   let href = getArtifactHref(request);
-  let configuration = tryToLoadConfigurationFile(config_filename)
+  let configuration = tryToLoadConfigurationFile(config_filename);
 
   if (href != null && configuration != null) {
-    removeBuild(configuration.inputDir);
     createDirectory(configuration.inputDir);
 
     let temp_zip_filename = './' + config_filename + '.zip';
@@ -153,6 +152,7 @@ function onDownloadCompleted(configuration, dest, version)
     createVersionFile(version, configuration.versionFilename);
     copySteamDllToBuild(configuration.steamDllFilename, configuration.inputDir);
     steamDeploy(configuration);
+    removeBuild(configuration.inputDir);
   } catch (e) {
     console.error("Unable to manage steam upload for: " + e.message);
   } finally {
