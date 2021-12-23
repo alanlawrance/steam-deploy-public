@@ -79,7 +79,7 @@ function parseConfigurationFile(config_filename) {
     configuration.versionFilename = configuration.inputDir + "/version.txt";
     configuration.steamDllFilename = configuration.inputDir + "/" + configuration.steamDllFilename;
     configuration.steamBuildConfigurationPath = configuration.steamBuilderPath + "/build/" + config_filename + "/" + configuration.steamBuildConfigurationPath;
-    configuration.execForDRM = configuration.steamBuilderPath + "/build/" + configuration.inputDir + "/" + configuration.execForDRM;
+    configuration.execForDRM = configuration.steamBuilderPath + "/" + configuration.inputDir + "/" + configuration.execForDRM;
 
     return configuration;
   } catch (e) {
