@@ -64,14 +64,14 @@ function getArtifactHref(request) {
 
 function tryToLoadConfigurationFile(config_filename) {
   if (fs.existsSync("./configuration/" + config_filename.concat('.yml'))) {
-    return pareseConfigurationFile(config_filename);
+    return parseConfigurationFile(config_filename);
   } else if (fs.existsSync(config_filename.concat('.cfg'))) {
     return parseLegacyConfigurationFile(config_filename);
   }
   return null;
 }
 
-function pareseConfigurationFile(config_filename) {
+function parseConfigurationFile(config_filename) {
   try {
     return yaml.load(fs.readFileSync("./configuration/" + config_filename.concat('.yml'), 'utf8'));
   } catch (e) {
@@ -94,6 +94,7 @@ function parseLegacyConfigurationFile(config_filename) {
       versionFilename: lines[6].trim(),
       steamAppidFilename: lines[7].trim(),
       steamDllFilename: lines[8].trim(),
+      useDRM: false
     }
   } catch (e) {
     console.error("Something went wrong while trying to read a file: " + e.message);
@@ -172,11 +173,14 @@ function steamDeploy(configuration)
 {
   console.log('Uploading build to Steam...');
   try {
-    execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
+    if(configuration.useDRM) {
+      execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' +drm_wrap ${configuration.appId} ${configuration.execInputFile} ${configuration.execOutputFile} drmtoolp ${configuration.DRMType} +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
+    } else {
+      execSync(`${configuration.steamcmdPath} +login ${configuration.username} '${configuration.password}' +run_app_build ${configuration.steamBuildConfigurationPath} +quit`);
+    }
   } catch (error) {
     throw new Error('Upload failed with error %s', error.message);
   }
-
   console.log('Upload complete');
 }
 
