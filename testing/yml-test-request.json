@@ -1,42 +1,63 @@
 {
-    "projectName": "My Project",
-    "buildTargetName": "test-build",
-    "projectGuid": "0895432b-43a2-4fd3-85f0-822d8fb607ba",
-    "orgForeignKey": "13260",
-    "buildNumber": 14,
+    "buildNumber": 1,
     "buildStatus": "success",
-    "startedBy": "Build User <builduser@domain.com>",
-    "platform": "standaloneosxintel",
+    "buildTargetName": "test-build",
+    "cleanBuild": false,
+    "credentialsOutdated": false,
+    "lastBuiltRevision": "2",
     "links": {
-        "artifacts": [
+      "api_self": {
+        "href": "/api/orgs/5772845592939/projects/xxxxxxxxx/buildtargets/test-build/builds/1",
+        "method": "get"
+      },
+      "artifacts": [
+        {
+          "files": [
             {
-                "name": "need better test request",
-                "files": [
-                    {
-                        "href": "https://images.pexels.com/photos/2253275/pexels-photo-2253275.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-                    }
-                ]
+              "filename": "Test Build.zip",
+              "href": "https://storage.googleapis.com/unitycloud-build-user-svc-live-build/xxxxxxxxxxxxxxxxxxxxx.zip",
+              "md5sum": "xxxxxxxxxxxx==",
+              "resumable": false,
+              "size": 25898466
             }
-        ],
-        "api_self": {
-            "method": "get",
-            "href": "/api/orgs/my-org/projects/my-project/buildtargets/mac-desktop-32-bit-build/builds/14"
-        },
-        "dashboard_url": {
-            "method": "get",
-            "href": "https://build.cloud.unity3d.com"
-        },
-        "dashboard_project": {
-            "method": "get",
-            "href": "/build/orgs/stephenp/projects/assetbundle-demo-1"
-        },
-        "dashboard_summary": {
-            "method": "get",
-            "href": "/build/orgs/my-org/projects/my-project/buildtargets/mac-desktop-32-bit-build/builds/14/summary"
-        },
-        "dashboard_log": {
-            "method": "get",
-            "href": "/build/orgs/my-org/projects/my-project/buildtargets/mac-desktop-32-bit-build/builds/14/log"
+          ],
+          "key": "primary",
+          "name": ".ZIP file",
+          "primary": true,
+          "show_download": true
         }
-    }
-}
+      ],
+      "dashboard_download": {
+        "href": "https://dashboard.unity3d.com/organizations/5xxxxxxxxxxxxxxxxx",
+        "method": "get"
+      },
+      "dashboard_download_direct": {
+        "href": "https://dashboard.unity3d.com/organizations/5xxxxxxxxxxxxxxxxxxxxxx",
+        "method": "get"
+      },
+      "dashboard_log": {
+        "href": "/organizations/5xxxxxxxxxxxxxxx/1/log",
+        "method": "get"
+      },
+      "dashboard_project": {
+        "href": "/organizationsxxxxxxxxxxxxxxxxx/history",
+        "method": "get"
+      },
+      "dashboard_summary": {
+        "href": "/organizations/xxxxxxxxxxxxxxxxxxxxxxxx/history",
+        "method": "get"
+      },
+      "dashboard_url": {
+        "href": "https://dashboard.unity3d.com",
+        "method": "get"
+      }
+    },
+    "local": false,
+    "orgForeignKey": "xxxxxxxxxxxxxxxxxx",
+    "platform": "standalonewindows64",
+    "platformName": "Windows x86_64",
+    "projectGuid": "xxxxxxxxxxxxxxxxxxx",
+    "projectName": "xxxxxxxxxxxxxxxx",
+    "scmType": "plastic",
+    "startedBy": "xxxxxxxxxxxxxxxxxxxxxx"
+  }
