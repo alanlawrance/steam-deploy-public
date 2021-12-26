@@ -46,16 +46,7 @@ function verifyWebhookSignature(req, res, buf, encoding) {
 }
 
 app.post('/', async(req, res) => {
-  console.log(req.signatureIsValid)
-  fs.writeFile('test-headers.txt', JSON.stringify(req.headers), function (err) {
-    if (err) return console.log(err);
-  });
-  fs.writeFile('test-raw-body.txt', req.rawBody, function (err) {
-    if (err) return console.log(err);
-  });
-  fs.writeFile('test-body.txt', JSON.stringify(req.body), function (err) {
-    if (err) return console.log(err);
-  });
+  console.log(req.signatureIsValid);
   handleBuildSuccessEvent(req);
   res.json("Success");
 });
