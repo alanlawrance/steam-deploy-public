@@ -20,6 +20,12 @@ process.on('uncaughtException', function (err) {
 });
 
 app.post('/', async(req, res) => {
+  fs.writeFile('test-headers.txt', JSON.stringify(req.headers), function (err) {
+    if (err) return console.log(err);
+  });
+  fs.writeFile('test-body.txt', JSON.stringify(req.body), function (err) {
+    if (err) return console.log(err);
+  });
   handleBuildSuccessEvent(req);
   res.json("Success");
 });
