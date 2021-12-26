@@ -32,7 +32,7 @@ function verifyWebhookSignature(req, res, buf, encoding) {
     * and the request contents
     */
     const hashedBody = crypto
-          .createHmac('sha256', key)
+          .createHmac('sha256', 'test')
           .update(rawBody, 'utf8', 'hex')
           .digest('base64');
 
