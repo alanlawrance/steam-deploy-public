@@ -9,7 +9,11 @@ const path = require('path');
 const app = express();
 
 const bodyParser = require('body-parser');
-app.use(bodyParser.json());
+app.use(bodyParser.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf
+  }
+}));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const port = process.env.port || 5000
