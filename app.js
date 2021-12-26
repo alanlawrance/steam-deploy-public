@@ -6,6 +6,7 @@ const https = require('https');
 const execSync = require('child_process').execSync;
 const util = require('util');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 
 const bodyParser = require('body-parser');
