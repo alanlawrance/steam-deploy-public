@@ -8,11 +8,7 @@ const util = require('util');
 const path = require('path');
 const crypto = require('crypto');
 const app = express();
-
 const bodyParser = require('body-parser');
-app.use(bodyParser.json({verify: verifyWebhookSignature}));
-app.use(bodyParser.urlencoded({ extended: true }));
-
 const port = process.env.port || 5000
 
 process.on('uncaughtException', function (err) {
@@ -20,43 +16,45 @@ process.on('uncaughtException', function (err) {
   process.exit(1); 
 });
 
-function verifyWebhookSignature(req, res, buf, encoding) {
-  if (buf && buf.length) {
-    const rawBody = buf.toString(encoding || 'utf8');
-    const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
-    const authorizationSignatureRaw = req.headers.authorization.split(';')[1];
-    const authorizationSignature = authorizationSignatureRaw.replace('Signature=', '').trim();
-    
-    const key = process.env.UNITY_CLOUD_BUILD_SIGNATURE;
-    /* Compare the computed HMAC digest based on the shared secret 
-    * and the request contents
-    */
-    const hashedBody = crypto
-          .createHmac('sha256', 'test')
-          .update(rawBody, 'utf8', 'hex')
-          .digest('base64');
+app.use(express.json({type: "application/json", verify: function(req, res, buf, encoding) {
+  const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
+  const authorizationSignatureRaw = req.headers.authorization.split(';')[1];
+  const authorizationSignature = authorizationSignatureRaw.replace('Signature=', '').trim();
+  
+  var digest = crypto
+  .createHmac('SHA256', 'test')
+  .update(buf)
+  .digest('base64');
 
-    console.log("xCloudSignature comparison: " + hmacXCloudSignature === hashedBody)
-    console.log("authSignature comparison: " + authorizationSignature === hashedBody)
+  console.log("hmacXCloudSignature " + hmacXCloudSignature)
+  console.log("authorizationSignature " + authorizationSignature)
 
-    req.signatureIsValid = (hmacXCloudSignature === hashedBody || authorizationSignature === hashedBody);
+  if(digest == hmacXCloudSignature || digest == authorizationSignature){
+      req.headers['signature-verified'] = '200';
   } else {
-    req.signatureIsValid = false;
-  }
-}
+    req.headers['signature-verified'] = '301';
+  };
+}}));
+app.use(express.urlencoded({ extended: true }));
 
-app.post('/', async(req, res) => {
-  console.log(req.signatureIsValid);
-  handleBuildSuccessEvent(req);
-  res.json("Success");
+
+// Webhooks
+app.post("/", async (req, res) => {
+  const signatureCheckResult = req.get('signature-verified');
+  if( signatureCheckResult == '200') {
+    handleBuildSuccessEvent(req.body);
+    res.status(200).send("OK");
+  } else if (signatureCheckResult == '301') {
+    res.status(301).send("NOT OK");
+  }
 });
 
-async function handleBuildSuccessEvent(request) {
-  let config_filename = request.body.buildTargetName;
-  let build_number = request.body.buildNumber;
-  let last_commit = request.body.lastBuiltRevision;
+async function handleBuildSuccessEvent(body) {
+  let config_filename = body.buildTargetName;
+  let build_number = body.buildNumber;
+  let last_commit = body.lastBuiltRevision;
   let version = build_number.toString().concat('\n').concat(last_commit);
-  let href = getArtifactHref(request);
+  let href = getArtifactHref(body);
   let configuration = tryToLoadConfigurationFile(config_filename);
 
   if (href != null && configuration != null) {
@@ -68,12 +66,12 @@ async function handleBuildSuccessEvent(request) {
   }
 }
 
-function getArtifactHref(request) {
+function getArtifactHref(body) {
   try {
-    let href = request.body.links.artifacts[0].files[0].href;
+    let href = body.links.artifacts[0].files[0].href;
     // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
     if (href.includes('pdb_symbols')) {
-      href = request.body.links.artifacts[1].files[0].href;
+      href = body.links.artifacts[1].files[0].href;
     }
     return href;
   } catch (e) {
