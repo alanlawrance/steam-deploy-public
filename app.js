@@ -9,11 +9,7 @@ const path = require('path');
 const app = express();
 
 const bodyParser = require('body-parser');
-app.use(bodyParser.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf
-  }
-}));
+app.use(bodyParser.json({verify: verifyWebhookSignature}));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const port = process.env.port || 5000
@@ -23,7 +19,33 @@ process.on('uncaughtException', function (err) {
   process.exit(1); 
 });
 
+function verifyWebhookSignature(req, res, buf, encoding) {
+  if (buf && buf.length) {
+    const rawBody = buf.toString(encoding || 'utf8');
+    const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
+    const authorizationSignatureRaw = req.headers.authorization.split(':')[1];
+    const authorizationSignature = authorizationSignatureRaw.replace('Signature=', '').trim();
+    
+    const key = process.env.UNITY_CLOUD_BUILD_SIGNATURE;
+    /* Compare the computed HMAC digest based on the shared secret 
+    * and the request contents
+    */
+    const hashedBody = crypto
+          .createHmac('sha256', key)
+          .update(rawBody, 'utf8', 'hex')
+          .digest('base64');
+
+    console.log("xCloudSignature comparison: " + hmacXCloudSignature === hashedBody)
+    console.log("authSignature comparison: " + authorizationSignature === hashedBody)
+
+    req.signatureIsValid = (hmacXCloudSignature === hashedBody || authorizationSignature === hashedBody);
+  } else {
+    req.signatureIsValid = false;
+  }
+}
+
 app.post('/', async(req, res) => {
+  console.log(req.signatureIsValid)
   fs.writeFile('test-headers.txt', JSON.stringify(req.headers), function (err) {
     if (err) return console.log(err);
   });
