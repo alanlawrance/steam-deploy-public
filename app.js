@@ -27,6 +27,9 @@ app.post('/', async(req, res) => {
   fs.writeFile('test-headers.txt', JSON.stringify(req.headers), function (err) {
     if (err) return console.log(err);
   });
+  fs.writeFile('test-raw-body.txt', req.rawBody, function (err) {
+    if (err) return console.log(err);
+  });
   fs.writeFile('test-body.txt', JSON.stringify(req.body), function (err) {
     if (err) return console.log(err);
   });
