@@ -23,7 +23,7 @@ function verifyWebhookSignature(req, res, buf, encoding) {
   if (buf && buf.length) {
     const rawBody = buf.toString(encoding || 'utf8');
     const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
-    const authorizationSignatureRaw = req.headers.authorization.split(':')[1];
+    const authorizationSignatureRaw = req.headers.authorization.split(';')[1];
     const authorizationSignature = authorizationSignatureRaw.replace('Signature=', '').trim();
     
     const key = process.env.UNITY_CLOUD_BUILD_SIGNATURE;
