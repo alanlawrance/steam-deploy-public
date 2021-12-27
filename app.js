@@ -7,6 +7,7 @@ const execSync = require('child_process').execSync;
 const util = require('util');
 const path = require('path');
 const crypto = require('crypto');
+require('dotenv').config()
 const app = express();
 const port = process.env.port || 5000
 
@@ -19,7 +20,7 @@ app.use(express.json({type: "application/json", verify: function(req, res, buf, 
   const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
   
   var digest = crypto
-  .createHmac('SHA256', 'test')
+  .createHmac('SHA256', process.env.UNITY_CLOUD_BUILD_SIGNATURE)
   .update(buf)
   .digest('hex');
 
