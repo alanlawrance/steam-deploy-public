@@ -17,18 +17,24 @@ process.on('uncaughtException', function (err) {
 });
 
 app.use(express.json({type: "application/json", verify: function(req, res, buf, encoding) {
-  const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
+  req.headers['signature-verified'] = true;
+  if("UNITY_CLOUD_BUILD_SIGNATURE" in process.env) {
+    try {
+      const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
   
-  var digest = crypto
-  .createHmac('SHA256', process.env.UNITY_CLOUD_BUILD_SIGNATURE)
-  .update(buf)
-  .digest('hex');
-
-  if(digest == hmacXCloudSignature){
-      req.headers['signature-verified'] = true;
-  } else {
-    req.headers['signature-verified'] = false;
-  };
+      var digest = crypto
+      .createHmac('SHA256', process.env.UNITY_CLOUD_BUILD_SIGNATURE)
+      .update(buf)
+      .digest('hex');
+  
+      if(digest != hmacXCloudSignature){
+          req.headers['signature-verified'] = false;
+      };
+    } catch (e) {
+      console.error("Error while trying to read signature of request: " + e.message);
+      req.headers['signature-verified'] = false;
+    }
+  }
 }}));
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,7 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 // Webhooks
 app.post("/", async (req, res) => {
   const signatureCheckResult = req.get('signature-verified');
-  if( signatureCheckResult) {
+  if(signatureCheckResult) {
     console.log("Handling a request with valid signature");
     handleBuildSuccessEvent(req.body);
     res.status(200).send("OK");
