@@ -8,7 +8,6 @@ const util = require('util');
 const path = require('path');
 const crypto = require('crypto');
 const app = express();
-const bodyParser = require('body-parser');
 const port = process.env.port || 5000
 
 process.on('uncaughtException', function (err) {
@@ -18,21 +17,16 @@ process.on('uncaughtException', function (err) {
 
 app.use(express.json({type: "application/json", verify: function(req, res, buf, encoding) {
   const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
-  const authorizationSignatureRaw = req.headers.authorization.split(';')[1];
-  const authorizationSignature = authorizationSignatureRaw.replace('Signature=', '').trim();
   
   var digest = crypto
   .createHmac('SHA256', 'test')
   .update(buf)
-  .digest('base64');
+  .digest('hex');
 
-  console.log("hmacXCloudSignature " + hmacXCloudSignature)
-  console.log("authorizationSignature " + authorizationSignature)
-
-  if(digest == hmacXCloudSignature || digest == authorizationSignature){
-      req.headers['signature-verified'] = '200';
+  if(digest == hmacXCloudSignature){
+      req.headers['signature-verified'] = true;
   } else {
-    req.headers['signature-verified'] = '301';
+    req.headers['signature-verified'] = false;
   };
 }}));
 app.use(express.urlencoded({ extended: true }));
@@ -41,10 +35,12 @@ app.use(express.urlencoded({ extended: true }));
 // Webhooks
 app.post("/", async (req, res) => {
   const signatureCheckResult = req.get('signature-verified');
-  if( signatureCheckResult == '200') {
+  if( signatureCheckResult) {
+    console.log("Handling a request with valid signature");
     handleBuildSuccessEvent(req.body);
     res.status(200).send("OK");
-  } else if (signatureCheckResult == '301') {
+  } else {
+    console.log("Refusing a request with invalid signature");
     res.status(301).send("NOT OK");
   }
 });
