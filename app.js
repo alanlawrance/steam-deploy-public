@@ -6,12 +6,9 @@ const https = require('https');
 const execSync = require('child_process').execSync;
 const util = require('util');
 const path = require('path');
+const crypto = require('crypto');
+require('dotenv').config()
 const app = express();
-
-const bodyParser = require('body-parser');
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
 const port = process.env.port || 5000
 
 process.on('uncaughtException', function (err) {
@@ -19,17 +16,48 @@ process.on('uncaughtException', function (err) {
   process.exit(1); 
 });
 
-app.post('/', async(req, res) => {
-  handleBuildSuccessEvent(req);
-  res.json("Success");
+app.use(express.json({type: "application/json", verify: function(req, res, buf, encoding) {
+  req.headers['signature-verified'] = true;
+  if("UNITY_CLOUD_BUILD_SIGNATURE" in process.env) {
+    try {
+      const hmacXCloudSignature = req.get('x-unitycloudbuild-signature');
+  
+      var digest = crypto
+      .createHmac('SHA256', process.env.UNITY_CLOUD_BUILD_SIGNATURE)
+      .update(buf)
+      .digest('hex');
+  
+      if(digest != hmacXCloudSignature){
+          req.headers['signature-verified'] = false;
+      };
+    } catch (e) {
+      console.error("Error while trying to read signature of request: " + e.message);
+      req.headers['signature-verified'] = false;
+    }
+  }
+}}));
+app.use(express.urlencoded({ extended: true }));
+
+
+// Webhooks
+app.post("/", async (req, res) => {
+  const signatureCheckResult = req.get('signature-verified');
+  if(signatureCheckResult) {
+    console.log("Handling a request with valid signature");
+    handleBuildSuccessEvent(req.body);
+    res.status(200).send("OK");
+  } else {
+    console.log("Refusing a request with invalid signature");
+    res.status(301).send("NOT OK");
+  }
 });
 
-async function handleBuildSuccessEvent(request) {
-  let config_filename = request.body.buildTargetName;
-  let build_number = request.body.buildNumber;
-  let last_commit = request.body.lastBuiltRevision;
+async function handleBuildSuccessEvent(body) {
+  let config_filename = body.buildTargetName;
+  let build_number = body.buildNumber;
+  let last_commit = body.lastBuiltRevision;
   let version = build_number.toString().concat('\n').concat(last_commit);
-  let href = getArtifactHref(request);
+  let href = getArtifactHref(body);
   let configuration = tryToLoadConfigurationFile(config_filename);
 
   if (href != null && configuration != null) {
@@ -41,12 +69,12 @@ async function handleBuildSuccessEvent(request) {
   }
 }
 
-function getArtifactHref(request) {
+function getArtifactHref(body) {
   try {
-    let href = request.body.links.artifacts[0].files[0].href;
+    let href = body.links.artifacts[0].files[0].href;
     // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
     if (href.includes('pdb_symbols')) {
-      href = request.body.links.artifacts[1].files[0].href;
+      href = body.links.artifacts[1].files[0].href;
     }
     return href;
   } catch (e) {
