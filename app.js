@@ -175,6 +175,7 @@ function onDownloadCompleted(configuration, dest, version)
   } catch (e) {
     console.error("Unable to manage steam upload for: " + e.message);
   } finally {
+    if(process.env.NODE_ENV == "development") return;
     removeBuild(configuration.inputDir);
     removeBuild(configuration.outputDir);
     tryToRemoveTempFile(dest);
