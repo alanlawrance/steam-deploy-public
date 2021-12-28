@@ -186,7 +186,7 @@ function decompressBuild(filename, inputDir)
 {
   console.log('Decompressing build...');
   try {
-    execSync(`unzip -o ${filename} -d ${inputDir}`);
+    execSync(`unzip -o ${filename} -d ${inputDir} -x "*.pdb" "*_BurstDebugInformation_DoNotShip/*" "*_BackUpThisFolder_ButDontShipItWithYourGame/*"`);
   } catch (error) {
     throw new Error('Unzip failed with error %s', error.message);
   }
