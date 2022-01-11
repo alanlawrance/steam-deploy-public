@@ -1,5 +1,5 @@
-Node app that will listen for build events from Unity Cloud Build, download the build, then upload to Steam.
+# SteamDeployPublic
+SteamDeployPublic is a simple node app that you can deploy anywhere that will listen for build events from Unity Cloud Build, download the build, then upload to Steam. This will give yo a simple but working full pipeline.
 
-Documentation:
-https://docs.google.com/document/d/1DNN_f_H4PZaLjKnIx4oS2husR41oDSth673lMsc9jyo/edit?usp=sharing
-
+**Documentation:**  
+https://github.com/alanlawrance/steam-deploy-public/wiki
