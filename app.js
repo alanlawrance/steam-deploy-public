@@ -71,14 +71,25 @@ async function handleBuildSuccessEvent(body) {
 
 function getArtifactHref(body) {
   try {
-    let href = body.links.artifacts[0].files[0].href;
-    // at some point Unity started putting the pdb_symbols href first in the artifacts list, so skip that if found
-    if (href.includes('pdb_symbols')) {
-      href = body.links.artifacts[1].files[0].href;
-    }
-    return href;
+	let buildZipFilename = body.buildTargetName + '.zip';
+	for (let i = 0; i < body.links.artifacts.length; i++) {
+		for (let j = 0; j < body.links.artifacts[i].files.length; j++) {
+			if (body.links.artifacts[i].files[j].filename == buildZipFilename) {
+				return body.links.artifacts[i].files[j].href;
+			}
+		}
+	}
+	
+    console.error('Unable to find artifact for build.  Artifacts present:');
+	for (let i = 0; i < body.links.artifacts.length; i++) {
+		for (let j = 0; j < body.links.artifacts[i].files.length; j++) {
+			console.error(body.links.artifacts[i].files[j].filename);
+		}
+	}
+	return null;
+	
   } catch (e) {
-    console.error("Unable to get artifact href for: " + e.message);
+    console.error("Unable to get artifact href due to exception: " + e.message);
     return null;
   }
 }
