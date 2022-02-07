@@ -71,10 +71,10 @@ async function handleBuildSuccessEvent(body) {
 
 function getArtifactHref(body) {
   try {
-	let buildZipFilename = body.buildTargetName + '.zip';
+	let buildZipFilename = body.buildTargetName + '-' + body.buildNumber + '.zip';
 	for (let i = 0; i < body.links.artifacts.length; i++) {
 		for (let j = 0; j < body.links.artifacts[i].files.length; j++) {
-			if (body.links.artifacts[i].files[j].filename == buildZipFilename) {
+			if (body.links.artifacts[i].files[j].href.includes(buildZipFilename)) {
 				return body.links.artifacts[i].files[j].href;
 			}
 		}
